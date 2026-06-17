@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Admin.Api/Admin.Api.csproj" />
+    <Project Path="src/BuildingBlocks/BuildingBlocks.csproj" />
+    <Project Path="src/Engagement.Api/Engagement.Api.csproj" />
+    <Project Path="src/Gateway.Api/Gateway.Api.csproj" />
+    <Project Path="src/Identity.Api/Identity.Api.csproj" />
+    <Project Path="src/Listings.Api/Listings.Api.csproj" />
+    <Project Path="src/Media.Api/Media.Api.csproj" />
+    <Project Path="src/Notifications.Api/Notifications.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PropertyMarketplace.IntegrationTests/PropertyMarketplace.IntegrationTests.csproj" />
+    <Project Path="tests/PropertyMarketplace.UnitTests/PropertyMarketplace.UnitTests.csproj" />
+  </Folder>
+</Solution>
