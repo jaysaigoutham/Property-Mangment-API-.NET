@@ -8,6 +8,7 @@
     <Project Path="src/Listings.Api/Listings.Api.csproj" />
     <Project Path="src/Media.Api/Media.Api.csproj" />
     <Project Path="src/Notifications.Api/Notifications.Api.csproj" />
+    <Project Path="src/Payments.Api/Payments.Api.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/PropertyMarketplace.IntegrationTests/PropertyMarketplace.IntegrationTests.csproj" />

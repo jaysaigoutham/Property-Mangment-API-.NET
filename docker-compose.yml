@@ -68,7 +68,14 @@ services:
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --replication-factor 1 --partitions 3 --topic inquiry.created &&
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --replication-factor 1 --partitions 3 --topic review.created &&
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --replication-factor 1 --partitions 3 --topic favorite.created &&
-      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --replication-factor 1 --partitions 3 --topic notification.requested"
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --replication-factor 1 --partitions 3 --topic notification.requested &&
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --replication-factor 1 --partitions 3 --topic payment.checkout.created &&
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --replication-factor 1 --partitions 3 --topic payment.completed &&
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --replication-factor 1 --partitions 3 --topic payment.failed &&
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --replication-factor 1 --partitions 3 --topic promo-code.created &&
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --replication-factor 1 --partitions 3 --topic promo-code.updated &&
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --replication-factor 1 --partitions 3 --topic promo-code.deleted &&
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --replication-factor 1 --partitions 3 --topic ad.entitlement.created"
 
   minio:
     image: minio/minio:latest
@@ -110,6 +117,7 @@ services:
       ReverseProxy__Clusters__identity__Destinations__identity-1__Address: http://identity-api:8080/
       ReverseProxy__Clusters__listings__Destinations__listings-1__Address: http://listings-api:8080/
       ReverseProxy__Clusters__media__Destinations__media-1__Address: http://media-api:8080/
+      ReverseProxy__Clusters__payments__Destinations__payments-1__Address: http://payments-api:8080/
       ReverseProxy__Clusters__engagement__Destinations__engagement-1__Address: http://engagement-api:8080/
       ReverseProxy__Clusters__admin__Destinations__admin-1__Address: http://admin-api:8080/
       ReverseProxy__Clusters__notifications__Destinations__notifications-1__Address: http://notifications-api:8080/
@@ -117,6 +125,7 @@ services:
       - identity-api
       - listings-api
       - media-api
+      - payments-api
       - engagement-api
       - admin-api
 
@@ -134,6 +143,7 @@ services:
       ConnectionStrings__media: Host=postgres;Port=5432;Database=property_media;Username=postgres;Password=postgres
       ConnectionStrings__engagement: Host=postgres;Port=5432;Database=property_engagement;Username=postgres;Password=postgres
       ConnectionStrings__notifications: Host=postgres;Port=5432;Database=property_notifications;Username=postgres;Password=postgres
+      ConnectionStrings__payments: Host=postgres;Port=5432;Database=property_payments;Username=postgres;Password=postgres
       ConnectionStrings__redis: redis:6379
       Kafka__BootstrapServers: kafka:9092
       Jwt__SigningKey: ${JWT_SIGNING_KEY:-dev-only-signing-key-change-me-in-production-32}
@@ -154,6 +164,7 @@ services:
       - "8082:8080"
     environment:
       <<: *service-env
+      Services__Payments: http://payments-api:8080
     depends_on:
       postgres:
         condition: service_healthy
@@ -161,6 +172,8 @@ services:
         condition: service_healthy
       kafka-init:
         condition: service_completed_successfully
+      payments-api:
+        condition: service_started
 
   media-api:
     build:
@@ -218,6 +231,29 @@ services:
       kafka-init:
         condition: service_completed_successfully
 
+  payments-api:
+    build:
+      context: .
+      args:
+        PROJECT: Payments.Api
+    ports:
+      - "8087:8080"
+    environment:
+      <<: *service-env
+      Payments__Stripe__SecretKey: ${STRIPE_SECRET_KEY:-}
+      Payments__Stripe__WebhookSecret: ${STRIPE_WEBHOOK_SECRET:-}
+      Payments__PayHere__MerchantId: ${PAYHERE_MERCHANT_ID:-}
+      Payments__PayHere__MerchantSecret: ${PAYHERE_MERCHANT_SECRET:-}
+      Payments__PayHere__CheckoutUrl: ${PAYHERE_CHECKOUT_URL:-https://sandbox.payhere.lk/pay/checkout}
+      Payments__PayHere__NotifyUrl: ${PAYHERE_NOTIFY_URL:-http://localhost:8087/payments/webhooks/payhere}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+
   admin-api:
     build:
       context: .
@@ -231,11 +267,13 @@ services:
       Services__Listings: http://listings-api:8080
       Services__Engagement: http://engagement-api:8080
       Services__Notifications: http://notifications-api:8080
+      Services__Payments: http://payments-api:8080
     depends_on:
       - identity-api
       - listings-api
       - engagement-api
       - notifications-api
+      - payments-api
 
 volumes:
   postgres-data:

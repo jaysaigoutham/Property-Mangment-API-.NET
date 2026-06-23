@@ -17,6 +17,7 @@ app.MapGet("/", () => Results.Ok(new
         "/auth",
         "/listings",
         "/media",
+        "/payments",
         "/favorites",
         "/saved-searches",
         "/inquiries",

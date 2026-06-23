@@ -1,0 +1,39 @@
+@Payments.Api_HostAddress = http://localhost:8087
+@AgentToken = paste-agent-jwt-here
+@AdminToken = paste-admin-jwt-here
+@ListingId = paste-listing-id-here
+@AdPackageId = paste-ad-package-id-here
+
+GET {{Payments.Api_HostAddress}}/payments/ad-packages
+
+###
+
+POST {{Payments.Api_HostAddress}}/payments/checkouts/preview
+Authorization: Bearer {{AgentToken}}
+Content-Type: application/json
+
+{
+  "listingId": "{{ListingId}}",
+  "adPackageId": "{{AdPackageId}}",
+  "promoCode": null
+}
+
+###
+
+POST {{Payments.Api_HostAddress}}/payments/checkouts
+Authorization: Bearer {{AgentToken}}
+Content-Type: application/json
+
+{
+  "listingId": "{{ListingId}}",
+  "adPackageId": "{{AdPackageId}}",
+  "provider": "Stripe",
+  "promoCode": null,
+  "successUrl": "http://localhost:3000/payment/success",
+  "cancelUrl": "http://localhost:3000/payment/cancel"
+}
+
+###
+
+GET {{Payments.Api_HostAddress}}/admin/payments/promo-codes
+Authorization: Bearer {{AdminToken}}

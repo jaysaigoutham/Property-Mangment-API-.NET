@@ -25,6 +25,11 @@ builder.Services.AddHttpClient("notifications", (sp, client) =>
     var configuration = sp.GetRequiredService<IConfiguration>();
     client.BaseAddress = new Uri(configuration["Services:Notifications"] ?? "http://notifications-api:8080");
 });
+builder.Services.AddHttpClient("payments", (sp, client) =>
+{
+    var configuration = sp.GetRequiredService<IConfiguration>();
+    client.BaseAddress = new Uri(configuration["Services:Payments"] ?? "http://payments-api:8080");
+});
 
 var app = builder.Build();
 
@@ -34,7 +39,7 @@ var admin = app.MapGroup("/admin").WithTags("Admin").RequireAuthorization("Admin
 
 admin.MapGet("/summary", async (IHttpClientFactory httpClientFactory, CancellationToken cancellationToken) =>
 {
-    var services = new[] { "identity", "listings", "engagement", "notifications" };
+    var services = new[] { "identity", "listings", "engagement", "notifications", "payments" };
     var results = new List<object>();
 
     foreach (var service in services)
@@ -75,6 +80,33 @@ admin.MapPost("/reviews/{reviewId:guid}/reject", (Guid reviewId, HttpContext con
 admin.MapGet("/notifications", (HttpContext context, IHttpClientFactory factory, CancellationToken cancellationToken) =>
     ForwardAsync(context, factory.CreateClient("notifications"), HttpMethod.Get, "/notifications", cancellationToken));
 
+admin.MapGet("/payments/ad-packages", (HttpContext context, IHttpClientFactory factory, CancellationToken cancellationToken) =>
+    ForwardAsync(context, factory.CreateClient("payments"), HttpMethod.Get, "/admin/payments/ad-packages", cancellationToken));
+
+admin.MapPost("/payments/ad-packages", (HttpContext context, IHttpClientFactory factory, CancellationToken cancellationToken) =>
+    ForwardAsync(context, factory.CreateClient("payments"), HttpMethod.Post, "/admin/payments/ad-packages", cancellationToken));
+
+admin.MapPut("/payments/ad-packages/{packageId:guid}", (Guid packageId, HttpContext context, IHttpClientFactory factory, CancellationToken cancellationToken) =>
+    ForwardAsync(context, factory.CreateClient("payments"), HttpMethod.Put, $"/admin/payments/ad-packages/{packageId}", cancellationToken));
+
+admin.MapDelete("/payments/ad-packages/{packageId:guid}", (Guid packageId, HttpContext context, IHttpClientFactory factory, CancellationToken cancellationToken) =>
+    ForwardAsync(context, factory.CreateClient("payments"), HttpMethod.Delete, $"/admin/payments/ad-packages/{packageId}", cancellationToken));
+
+admin.MapGet("/payments/promo-codes", (HttpContext context, IHttpClientFactory factory, CancellationToken cancellationToken) =>
+    ForwardAsync(context, factory.CreateClient("payments"), HttpMethod.Get, "/admin/payments/promo-codes", cancellationToken));
+
+admin.MapPost("/payments/promo-codes", (HttpContext context, IHttpClientFactory factory, CancellationToken cancellationToken) =>
+    ForwardAsync(context, factory.CreateClient("payments"), HttpMethod.Post, "/admin/payments/promo-codes", cancellationToken));
+
+admin.MapPut("/payments/promo-codes/{promoCodeId:guid}", (Guid promoCodeId, HttpContext context, IHttpClientFactory factory, CancellationToken cancellationToken) =>
+    ForwardAsync(context, factory.CreateClient("payments"), HttpMethod.Put, $"/admin/payments/promo-codes/{promoCodeId}", cancellationToken));
+
+admin.MapDelete("/payments/promo-codes/{promoCodeId:guid}", (Guid promoCodeId, HttpContext context, IHttpClientFactory factory, CancellationToken cancellationToken) =>
+    ForwardAsync(context, factory.CreateClient("payments"), HttpMethod.Delete, $"/admin/payments/promo-codes/{promoCodeId}", cancellationToken));
+
+admin.MapGet("/payments/checkouts", (HttpContext context, IHttpClientFactory factory, CancellationToken cancellationToken) =>
+    ForwardAsync(context, factory.CreateClient("payments"), HttpMethod.Get, "/admin/payments/checkouts", cancellationToken));
+
 app.Run();
 
 static async Task<IResult> ForwardAsync(
@@ -89,6 +121,16 @@ static async Task<IResult> ForwardAsync(
     if (context.Request.Headers.Authorization.Count > 0)
     {
         request.Headers.Authorization = AuthenticationHeaderValue.Parse(context.Request.Headers.Authorization.ToString());
+    }
+
+    if (context.Request.ContentLength > 0 || context.Request.Headers.ContainsKey("Transfer-Encoding"))
+    {
+        request.Content = new StreamContent(context.Request.Body);
+
+        if (!string.IsNullOrWhiteSpace(context.Request.ContentType))
+        {
+            request.Content.Headers.ContentType = MediaTypeHeaderValue.Parse(context.Request.ContentType);
+        }
     }
 
     using var response = await client.SendAsync(request, cancellationToken);

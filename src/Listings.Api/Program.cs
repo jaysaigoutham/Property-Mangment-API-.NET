@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text.Json;
 using BuildingBlocks.Auth;
 using BuildingBlocks.Caching;
@@ -14,6 +16,12 @@ builder
     .AddMarketplaceServiceDefaults("listings-api")
     .AddPostgresDb<ListingsDbContext>("listings")
     .AddKafkaOutbox<ListingsDbContext>("listings-api");
+
+builder.Services.AddHttpClient("payments", (sp, client) =>
+{
+    var configuration = sp.GetRequiredService<IConfiguration>();
+    client.BaseAddress = new Uri(configuration["Services:Payments"] ?? "http://payments-api:8080");
+});
 
 var app = builder.Build();
 
@@ -229,7 +237,9 @@ group.MapPut("/{id:guid}", async Task<IResult> (
 group.MapPost("/{id:guid}/submit", async Task<IResult> (
     Guid id,
     ClaimsPrincipal user,
+    HttpContext context,
     ListingsDbContext db,
+    IHttpClientFactory httpClientFactory,
     CancellationToken cancellationToken) =>
 {
     var listing = await db.Listings.FindAsync([id], cancellationToken);
@@ -242,6 +252,13 @@ group.MapPost("/{id:guid}/submit", async Task<IResult> (
     if (listing.OwnerId != user.GetUserId() && !user.IsAdmin())
     {
         return Results.Forbid();
+    }
+
+    if (!await HasActiveListingAdAsync(id, context, httpClientFactory, cancellationToken))
+    {
+        return Results.Json(
+            new { error = "Complete a paid listing ad checkout before submitting this listing for approval." },
+            statusCode: StatusCodes.Status402PaymentRequired);
     }
 
     listing.Status = ListingStatus.PendingApproval;
@@ -329,5 +346,32 @@ static OutboxMessage CreateOutbox(string topic, Listing listing) =>
         "listings-api",
         new ListingChangedEvent(listing.Id, listing.OwnerId, listing.Status, listing.Title, listing.City, listing.Price),
         listing.Id.ToString());
+
+static async Task<bool> HasActiveListingAdAsync(
+    Guid listingId,
+    HttpContext context,
+    IHttpClientFactory httpClientFactory,
+    CancellationToken cancellationToken)
+{
+    var client = httpClientFactory.CreateClient("payments");
+    using var request = new HttpRequestMessage(HttpMethod.Get, $"/payments/entitlements/listings/{listingId}/active");
+
+    if (context.Request.Headers.Authorization.Count > 0)
+    {
+        request.Headers.Authorization = AuthenticationHeaderValue.Parse(context.Request.Headers.Authorization.ToString());
+    }
+
+    var response = await client.SendAsync(request, cancellationToken);
+
+    if (!response.IsSuccessStatusCode)
+    {
+        return false;
+    }
+
+    var entitlement = await response.Content.ReadFromJsonAsync<ActivePaymentEntitlement>(cancellationToken: cancellationToken);
+    return entitlement?.IsActive == true;
+}
+
+sealed record ActivePaymentEntitlement(bool IsActive, Guid? EntitlementId, DateTimeOffset? ExpiresAtUtc);
 
 public partial class Program;

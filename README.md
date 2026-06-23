@@ -8,9 +8,10 @@ Production-style .NET 10 microservices backend for a property listing marketplac
 - `Identity.Api`: registration, login, refresh tokens, profiles, and roles.
 - `Listings.Api`: listing CRUD, owner checks, public search/filtering, approval workflow, and Redis read caching.
 - `Media.Api`: MinIO/S3-compatible image upload URLs and image metadata.
+- `Payments.Api`: paid listing ad packages, promo codes, Stripe/PayHere checkout, webhooks, and ad entitlements.
 - `Engagement.Api`: favorites, saved searches, inquiries, reviews, and agent profiles.
 - `Notifications.Api`: Kafka consumer that records notification logs.
-- `Admin.Api`: secured admin orchestration for users, listings, reviews, notifications, and service status.
+- `Admin.Api`: secured admin orchestration for users, listings, reviews, notifications, payments, and service status.
 - `BuildingBlocks`: shared JWT, Kafka, outbox, Redis, PostgreSQL, logging, health, and service defaults.
 
 ## Infrastructure
@@ -25,7 +26,7 @@ Production-style .NET 10 microservices backend for a property listing marketplac
 
 Kafka topics are created by the `kafka-init` service:
 
-`user.registered`, `listing.created`, `listing.updated`, `listing.approved`, `listing.rejected`, `inquiry.created`, `review.created`, `favorite.created`, `notification.requested`.
+`user.registered`, `listing.created`, `listing.updated`, `listing.approved`, `listing.rejected`, `inquiry.created`, `review.created`, `favorite.created`, `notification.requested`, `payment.checkout.created`, `payment.completed`, `payment.failed`, `promo-code.created`, `promo-code.updated`, `promo-code.deleted`, `ad.entitlement.created`.
 
 ## Run
 
@@ -44,7 +45,17 @@ Direct service ports:
 - Engagement: `http://localhost:8084`
 - Notifications: `http://localhost:8085`
 - Admin: `http://localhost:8086`
+- Payments: `http://localhost:8087`
 - MinIO console: `http://localhost:9001`
+
+Payment provider secrets are read from environment/config:
+
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `PAYHERE_MERCHANT_ID`
+- `PAYHERE_MERCHANT_SECRET`
+- `PAYHERE_CHECKOUT_URL`
+- `PAYHERE_NOTIFY_URL`
 
 ## Useful Requests
 
@@ -104,6 +115,20 @@ Approve a listing with an admin token:
 ```http
 POST http://localhost:8080/admin/listings/<listing-id>/approve
 Authorization: Bearer <admin-token>
+```
+
+Preview checkout pricing for a draft listing:
+
+```http
+POST http://localhost:8080/payments/checkouts/preview
+Authorization: Bearer <agent-token>
+Content-Type: application/json
+
+{
+  "listingId": "<listing-id>",
+  "adPackageId": "<ad-package-id>",
+  "promoCode": "WELCOME10"
+}
 ```
 
 ## Build and Test
