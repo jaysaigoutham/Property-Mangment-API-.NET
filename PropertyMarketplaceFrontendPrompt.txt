@@ -1,0 +1,292 @@
+Build a frontend web project for a property listing marketplace that connects to an existing .NET 10 microservices backend.
+
+Backend summary:
+- Primary API gateway URL: http://localhost:8080
+- Use the gateway URL for normal frontend API calls.
+- Direct service ports are only for debugging:
+  - Identity: http://localhost:8081
+  - Listings: http://localhost:8082
+  - Media: http://localhost:8083
+  - Engagement: http://localhost:8084
+  - Notifications: http://localhost:8085
+  - Admin: http://localhost:8086
+  - Payments: http://localhost:8087
+- Existing Postman collection reference: ../PropertyMarketplace.postman_collection.json
+
+Frontend goal:
+Create an actual usable web application, not a landing page. The app should let buyers search and engage with listings, agents manage property listings and paid ad checkout, and admins moderate and manage marketplace operations.
+
+Recommended stack:
+- React + Vite + TypeScript, unless the current project uses a different stack.
+- Use a clean responsive layout.
+- Use environment config, for example:
+  - VITE_API_BASE_URL=http://localhost:8080
+- Centralize API calls in a typed API client.
+- Use form validation and clear loading/error/empty states.
+
+Authentication and authorization:
+- Backend auth uses JWT bearer tokens.
+- Login/register responses include an access token.
+- Store the JWT securely on the client side.
+- Send protected API calls with:
+  Authorization: Bearer <token>
+- Supported roles:
+  - buyer
+  - agent
+  - admin
+- The UI must separate navigation and permissions by role.
+- Buyers should not see agent listing management or admin tools.
+- Agents should see listing management, media management, and paid ad checkout.
+- Admins should see marketplace moderation and payment administration screens.
+
+Required pages and flows:
+
+1. Auth pages
+- Login page.
+- Register page with role selection for buyer or agent.
+- Profile page for the logged-in user.
+- Logout action.
+
+2. Public marketplace pages
+- Listing search page.
+- Listing filters:
+  - q
+  - city
+  - country
+  - propertyType
+  - minPrice
+  - maxPrice
+  - bedrooms
+  - page
+  - pageSize
+- Listing details page.
+- Public listing detail should show listing information, amenities, images, agent information where available, reviews, and actions based on role.
+
+3. Buyer dashboard
+- Saved favorites.
+- Saved searches.
+- Submitted inquiries.
+- Ability to favorite/unfavorite listings.
+- Ability to create saved searches.
+- Ability to send an inquiry for a listing.
+- Ability to create a review for an agent/listing.
+
+4. Agent dashboard
+- My listings.
+- Create listing.
+- Edit listing.
+- Delete listing.
+- Listing status display:
+  - Draft
+  - PendingApproval
+  - Approved
+  - Rejected
+- Submit listing for approval.
+- Important: submitting a listing requires an active completed paid listing ad entitlement. If the backend returns payment required, route the agent to checkout.
+
+5. Media manager
+- Generate upload URL for listing images.
+- Upload image file using the returned upload URL.
+- Display listing images.
+- Reorder images.
+- Remove images.
+
+6. Paid ad checkout
+- Show available ad packages from the backend.
+- Allow agent to choose an ad package for a draft listing.
+- Allow optional promo code entry before checkout.
+- Show checkout preview:
+  - original amount
+  - discount amount
+  - final amount
+  - currency
+- Create checkout using Stripe or PayHere.
+- For Stripe, redirect the user to the hosted checkout URL returned by the backend.
+- For PayHere, use the hosted checkout URL and form fields returned by the backend.
+- After payment, show a payment status/check page using checkout details.
+- After a completed payment entitlement exists, allow listing submission for approval.
+- Never calculate final payable amount on the frontend; always ask the backend for preview/create checkout.
+
+7. Admin dashboard
+- Service summary/status.
+- User list.
+- Listing moderation:
+  - approve listing
+  - reject listing
+- Review moderation:
+  - pending reviews
+  - publish review
+  - reject review
+- Notifications list.
+- Notifications by topic.
+- Payment administration:
+  - list/create/update/delete ad packages
+  - list/create/update/delete promo codes
+  - list payment checkouts
+- Admin screens require an admin JWT.
+
+Important backend endpoints:
+
+Auth:
+- POST /auth/register
+- POST /auth/login
+- POST /auth/refresh
+- GET /auth/profile
+
+Listings:
+- GET /listings
+- GET /listings/{listingId}
+- GET /listings/mine
+- POST /listings
+- PUT /listings/{listingId}
+- POST /listings/{listingId}/submit
+- DELETE /listings/{listingId}
+
+Media:
+- POST /media/upload-url
+- GET /media/listings/{listingId}
+- PATCH /media/{mediaId}/sort-order
+- DELETE /media/{mediaId}
+
+Engagement:
+- POST /favorites
+- GET /favorites
+- DELETE /favorites/{listingId}
+- POST /saved-searches
+- GET /saved-searches
+- POST /inquiries
+- GET /inquiries/mine
+- POST /reviews
+- GET /reviews/agents/{agentId}
+- PUT /agents/profile
+- GET /agents/{agentId}
+
+Payments:
+- GET /payments/ad-packages
+- POST /payments/checkouts/preview
+- POST /payments/checkouts
+- GET /payments/checkouts/{checkoutId}
+- GET /payments/entitlements/listings/{listingId}/active
+
+Admin:
+- GET /admin/summary
+- GET /admin/users
+- POST /admin/listings/{listingId}/approve
+- POST /admin/listings/{listingId}/reject
+- GET /admin/reviews/pending
+- POST /admin/reviews/{reviewId}/publish
+- POST /admin/reviews/{reviewId}/reject
+- GET /admin/notifications
+- GET /admin/payments/ad-packages
+- POST /admin/payments/ad-packages
+- PUT /admin/payments/ad-packages/{adPackageId}
+- DELETE /admin/payments/ad-packages/{adPackageId}
+- GET /admin/payments/promo-codes
+- POST /admin/payments/promo-codes
+- PUT /admin/payments/promo-codes/{promoCodeId}
+- DELETE /admin/payments/promo-codes/{promoCodeId}
+- GET /admin/payments/checkouts
+
+Notifications:
+- GET /notifications
+- GET /notifications/topics/{topic}
+
+Sample request bodies:
+
+Register:
+{
+  "email": "agent@example.com",
+  "password": "Password123!",
+  "displayName": "Agent One",
+  "role": "agent"
+}
+
+Login:
+{
+  "email": "agent@example.com",
+  "password": "Password123!"
+}
+
+Create listing:
+{
+  "title": "Modern apartment near transit",
+  "description": "Bright three bedroom apartment with parking.",
+  "city": "Colombo",
+  "state": "Western",
+  "country": "Sri Lanka",
+  "addressLine": "Main Street",
+  "price": 250000,
+  "bedrooms": 3,
+  "bathrooms": 2,
+  "areaSqm": 120,
+  "propertyType": "Apartment",
+  "amenities": ["parking", "pool"]
+}
+
+Generate upload URL:
+{
+  "listingId": "<listing-id>",
+  "fileName": "front-view.jpg",
+  "contentType": "image/jpeg",
+  "sortOrder": 1
+}
+
+Checkout preview:
+{
+  "listingId": "<listing-id>",
+  "adPackageId": "<ad-package-id>",
+  "promoCode": "WELCOME10"
+}
+
+Create Stripe checkout:
+{
+  "listingId": "<listing-id>",
+  "adPackageId": "<ad-package-id>",
+  "provider": "Stripe",
+  "promoCode": "WELCOME10",
+  "successUrl": "http://localhost:3000/payment/success",
+  "cancelUrl": "http://localhost:3000/payment/cancel"
+}
+
+Create PayHere checkout:
+{
+  "listingId": "<listing-id>",
+  "adPackageId": "<ad-package-id>",
+  "provider": "PayHere",
+  "promoCode": null,
+  "successUrl": "http://localhost:3000/payment/success",
+  "cancelUrl": "http://localhost:3000/payment/cancel"
+}
+
+Create promo code as admin:
+{
+  "code": "WELCOME10",
+  "description": "Ten percent off first listing ad.",
+  "discountType": "Percent",
+  "percentOff": 10,
+  "amountOff": null,
+  "currency": "USD",
+  "maxRedemptions": 100,
+  "perUserLimit": 1,
+  "validFromUtc": "2026-01-01T00:00:00Z",
+  "expiresAtUtc": "2027-01-01T00:00:00Z",
+  "autoDeleteAtUtc": "2027-02-01T00:00:00Z",
+  "isActive": true
+}
+
+Expected frontend behavior:
+- Use optimistic UI only where safe; otherwise refresh from the backend after writes.
+- Display backend validation errors clearly.
+- Handle 401 by redirecting to login.
+- Handle 403 by showing a not-authorized view.
+- Handle listing submit payment requirement by taking the agent to checkout.
+- Keep admin functionality hidden unless the logged-in user role is admin.
+- Keep payment provider secrets out of the frontend. The frontend only receives hosted checkout URLs or PayHere form fields from the backend.
+- Do not build fake/mock-only pages. Connect screens to the backend API client.
+
+Deliverables:
+- Complete frontend project with install/run instructions.
+- Environment file example.
+- Typed API client or equivalent API service layer.
+- Responsive pages for buyer, agent, and admin workflows.
+- Clear README explaining how to run the frontend with the backend gateway.

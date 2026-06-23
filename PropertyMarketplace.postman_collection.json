@@ -1,0 +1,823 @@
+{
+  "info": {
+    "_postman_id": "e8f83f6d-bc2f-4d17-9b8a-property-marketplace",
+    "name": "Property Marketplace APIs",
+    "description": "Postman collection for the .NET microservices property marketplace backend. Requests are grouped by API area and use collection variables for URLs, JWT tokens, and common resource IDs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "identityUrl", "value": "http://localhost:8081" },
+    { "key": "listingsUrl", "value": "http://localhost:8082" },
+    { "key": "mediaUrl", "value": "http://localhost:8083" },
+    { "key": "engagementUrl", "value": "http://localhost:8084" },
+    { "key": "notificationsUrl", "value": "http://localhost:8085" },
+    { "key": "adminUrl", "value": "http://localhost:8086" },
+    { "key": "paymentsUrl", "value": "http://localhost:8087" },
+    { "key": "buyerToken", "value": "" },
+    { "key": "agentToken", "value": "" },
+    { "key": "adminToken", "value": "" },
+    { "key": "userId", "value": "00000000-0000-0000-0000-000000000001" },
+    { "key": "listingId", "value": "00000000-0000-0000-0000-000000000002" },
+    { "key": "agentId", "value": "00000000-0000-0000-0000-000000000003" },
+    { "key": "reviewId", "value": "00000000-0000-0000-0000-000000000004" },
+    { "key": "mediaId", "value": "00000000-0000-0000-0000-000000000005" },
+    { "key": "checkoutId", "value": "00000000-0000-0000-0000-000000000006" },
+    { "key": "adPackageId", "value": "00000000-0000-0000-0000-000000000007" },
+    { "key": "promoCodeId", "value": "00000000-0000-0000-0000-000000000008" },
+    { "key": "notificationTopic", "value": "payment.completed" },
+    { "key": "promoCode", "value": "WELCOME10" }
+  ],
+  "item": [
+    {
+      "name": "Gateway / Health",
+      "item": [
+        {
+          "name": "Gateway Root",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            }
+          }
+        },
+        {
+          "name": "Health Ready",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/ready",
+              "host": ["{{baseUrl}}"],
+              "path": ["health", "ready"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register Buyer",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"buyer@example.com\",\n  \"password\": \"Password123!\",\n  \"displayName\": \"Buyer One\",\n  \"role\": \"buyer\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Register Agent",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"agent@example.com\",\n  \"password\": \"Password123!\",\n  \"displayName\": \"Agent One\",\n  \"role\": \"agent\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Register Admin",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Password123!\",\n  \"displayName\": \"Admin\",\n  \"role\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login Buyer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('buyerToken', json.accessToken);",
+                  "  pm.collectionVariables.set('userId', json.userId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"buyer@example.com\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login Agent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('agentToken', json.accessToken);",
+                  "  pm.collectionVariables.set('agentId', json.userId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"agent@example.com\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('adminToken', json.accessToken);",
+                  "  pm.collectionVariables.set('userId', json.userId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"refreshToken\": \"paste-refresh-token-here\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            }
+          }
+        },
+        {
+          "name": "Profile",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{agentToken}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "profile"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Listings",
+      "item": [
+        {
+          "name": "Search Public Listings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/listings?q=apartment&city=Colombo&country=Sri Lanka&propertyType=Apartment&minPrice=100000&maxPrice=500000&bedrooms=2&page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["listings"],
+              "query": [
+                { "key": "q", "value": "apartment" },
+                { "key": "city", "value": "Colombo" },
+                { "key": "country", "value": "Sri Lanka" },
+                { "key": "propertyType", "value": "Apartment" },
+                { "key": "minPrice", "value": "100000" },
+                { "key": "maxPrice", "value": "500000" },
+                { "key": "bedrooms", "value": "2" },
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Listing By Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/listings/{{listingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["listings", "{{listingId}}"]
+            }
+          }
+        },
+        {
+          "name": "My Listings",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{agentToken}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/listings/mine",
+              "host": ["{{baseUrl}}"],
+              "path": ["listings", "mine"]
+            }
+          }
+        },
+        {
+          "name": "Create Listing",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('listingId', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{agentToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Modern apartment near transit\",\n  \"description\": \"Bright three bedroom apartment with parking.\",\n  \"city\": \"Colombo\",\n  \"state\": \"Western\",\n  \"country\": \"Sri Lanka\",\n  \"addressLine\": \"Main Street\",\n  \"price\": 250000,\n  \"bedrooms\": 3,\n  \"bathrooms\": 2,\n  \"areaSqm\": 120,\n  \"propertyType\": \"Apartment\",\n  \"amenities\": [\"parking\", \"pool\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/listings",
+              "host": ["{{baseUrl}}"],
+              "path": ["listings"]
+            }
+          }
+        },
+        {
+          "name": "Update Listing",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{agentToken}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated modern apartment near transit\",\n  \"description\": \"Updated description with parking and pool.\",\n  \"city\": \"Colombo\",\n  \"state\": \"Western\",\n  \"country\": \"Sri Lanka\",\n  \"addressLine\": \"Main Street\",\n  \"price\": 260000,\n  \"bedrooms\": 3,\n  \"bathrooms\": 2,\n  \"areaSqm\": 120,\n  \"propertyType\": \"Apartment\",\n  \"amenities\": [\"parking\", \"pool\", \"security\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/listings/{{listingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["listings", "{{listingId}}"]
+            }
+          }
+        },
+        {
+          "name": "Submit Listing For Approval",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{agentToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/listings/{{listingId}}/submit",
+              "host": ["{{baseUrl}}"],
+              "path": ["listings", "{{listingId}}", "submit"]
+            }
+          }
+        },
+        {
+          "name": "Delete Listing",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{agentToken}}", "type": "string" }] },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/listings/{{listingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["listings", "{{listingId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Media",
+      "item": [
+        {
+          "name": "Generate Upload URL",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{agentToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"listingId\": \"{{listingId}}\",\n  \"fileName\": \"front-view.jpg\",\n  \"contentType\": \"image/jpeg\",\n  \"sortOrder\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/media/upload-url",
+              "host": ["{{baseUrl}}"],
+              "path": ["media", "upload-url"]
+            }
+          }
+        },
+        {
+          "name": "Get Media By Listing",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/media/listings/{{listingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["media", "listings", "{{listingId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Media Sort Order",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{agentToken}}", "type": "string" }] },
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sortOrder\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/media/{{mediaId}}/sort-order",
+              "host": ["{{baseUrl}}"],
+              "path": ["media", "{{mediaId}}", "sort-order"]
+            }
+          }
+        },
+        {
+          "name": "Delete Media",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{agentToken}}", "type": "string" }] },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/media/{{mediaId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["media", "{{mediaId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Engagement",
+      "item": [
+        {
+          "name": "Add Favorite",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{buyerToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"listingId\": \"{{listingId}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/favorites", "host": ["{{baseUrl}}"], "path": ["favorites"] }
+          }
+        },
+        {
+          "name": "My Favorites",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{buyerToken}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/favorites", "host": ["{{baseUrl}}"], "path": ["favorites"] }
+          }
+        },
+        {
+          "name": "Remove Favorite",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{buyerToken}}", "type": "string" }] },
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/favorites/{{listingId}}", "host": ["{{baseUrl}}"], "path": ["favorites", "{{listingId}}"] }
+          }
+        },
+        {
+          "name": "Create Saved Search",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{buyerToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Colombo Apartments\",\n  \"filters\": {\n    \"city\": \"Colombo\",\n    \"propertyType\": \"Apartment\",\n    \"minPrice\": \"100000\",\n    \"maxPrice\": \"500000\"\n  }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/saved-searches", "host": ["{{baseUrl}}"], "path": ["saved-searches"] }
+          }
+        },
+        {
+          "name": "My Saved Searches",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{buyerToken}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/saved-searches", "host": ["{{baseUrl}}"], "path": ["saved-searches"] }
+          }
+        },
+        {
+          "name": "Create Inquiry",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{buyerToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"listingId\": \"{{listingId}}\",\n  \"message\": \"Is this property still available?\"\n}" },
+            "url": { "raw": "{{baseUrl}}/inquiries", "host": ["{{baseUrl}}"], "path": ["inquiries"] }
+          }
+        },
+        {
+          "name": "My Inquiries",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{buyerToken}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/inquiries/mine", "host": ["{{baseUrl}}"], "path": ["inquiries", "mine"] }
+          }
+        },
+        {
+          "name": "Create Review",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{buyerToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"listingId\": \"{{listingId}}\",\n  \"agentId\": \"{{agentId}}\",\n  \"rating\": 5,\n  \"comment\": \"Helpful agent and clear communication.\"\n}" },
+            "url": { "raw": "{{baseUrl}}/reviews", "host": ["{{baseUrl}}"], "path": ["reviews"] }
+          }
+        },
+        {
+          "name": "Get Agent Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/reviews/agents/{{agentId}}", "host": ["{{baseUrl}}"], "path": ["reviews", "agents", "{{agentId}}"] }
+          }
+        },
+        {
+          "name": "Update Agent Profile",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{agentToken}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"displayName\": \"Agent One\",\n  \"agencyName\": \"Prime Properties\",\n  \"phone\": \"+94111234567\",\n  \"licenseNumber\": \"LIC-12345\",\n  \"bio\": \"Residential property specialist.\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/agents/profile", "host": ["{{baseUrl}}"], "path": ["agents", "profile"] }
+          }
+        },
+        {
+          "name": "Get Agent Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/agents/{{agentId}}", "host": ["{{baseUrl}}"], "path": ["agents", "{{agentId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Get Ad Packages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/payments/ad-packages", "host": ["{{baseUrl}}"], "path": ["payments", "ad-packages"] }
+          }
+        },
+        {
+          "name": "Preview Checkout",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{agentToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"listingId\": \"{{listingId}}\",\n  \"adPackageId\": \"{{adPackageId}}\",\n  \"promoCode\": \"{{promoCode}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/payments/checkouts/preview", "host": ["{{baseUrl}}"], "path": ["payments", "checkouts", "preview"] }
+          }
+        },
+        {
+          "name": "Create Stripe Checkout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.checkout && json.checkout.id) pm.collectionVariables.set('checkoutId', json.checkout.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{agentToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"listingId\": \"{{listingId}}\",\n  \"adPackageId\": \"{{adPackageId}}\",\n  \"provider\": \"Stripe\",\n  \"promoCode\": \"{{promoCode}}\",\n  \"successUrl\": \"http://localhost:3000/payment/success\",\n  \"cancelUrl\": \"http://localhost:3000/payment/cancel\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/payments/checkouts", "host": ["{{baseUrl}}"], "path": ["payments", "checkouts"] }
+          }
+        },
+        {
+          "name": "Create PayHere Checkout",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{agentToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"listingId\": \"{{listingId}}\",\n  \"adPackageId\": \"{{adPackageId}}\",\n  \"provider\": \"PayHere\",\n  \"promoCode\": null,\n  \"successUrl\": \"http://localhost:3000/payment/success\",\n  \"cancelUrl\": \"http://localhost:3000/payment/cancel\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/payments/checkouts", "host": ["{{baseUrl}}"], "path": ["payments", "checkouts"] }
+          }
+        },
+        {
+          "name": "Get Checkout",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{agentToken}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/payments/checkouts/{{checkoutId}}", "host": ["{{baseUrl}}"], "path": ["payments", "checkouts", "{{checkoutId}}"] }
+          }
+        },
+        {
+          "name": "Check Listing Entitlement",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{agentToken}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/payments/entitlements/listings/{{listingId}}/active", "host": ["{{baseUrl}}"], "path": ["payments", "entitlements", "listings", "{{listingId}}", "active"] }
+          }
+        },
+        {
+          "name": "Stripe Webhook Sample",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Stripe-Signature", "value": "paste-stripe-signature-here" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"evt_test_webhook\",\n  \"type\": \"checkout.session.completed\",\n  \"data\": {\n    \"object\": {\n      \"id\": \"cs_test_provider_reference\",\n      \"payment_status\": \"paid\",\n      \"amount_total\": 2500,\n      \"currency\": \"usd\"\n    }\n  }\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/payments/webhooks/stripe", "host": ["{{baseUrl}}"], "path": ["payments", "webhooks", "stripe"] }
+          }
+        },
+        {
+          "name": "PayHere Webhook Sample",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "merchant_id", "value": "paste-merchant-id" },
+                { "key": "order_id", "value": "{{checkoutId}}" },
+                { "key": "payment_id", "value": "payhere-payment-id" },
+                { "key": "payhere_amount", "value": "25.00" },
+                { "key": "payhere_currency", "value": "USD" },
+                { "key": "status_code", "value": "2" },
+                { "key": "md5sig", "value": "paste-payhere-md5sig" }
+              ]
+            },
+            "url": { "raw": "{{baseUrl}}/payments/webhooks/payhere", "host": ["{{baseUrl}}"], "path": ["payments", "webhooks", "payhere"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "Summary",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/admin/summary", "host": ["{{baseUrl}}"], "path": ["admin", "summary"] } }
+        },
+        {
+          "name": "Users",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/admin/users", "host": ["{{baseUrl}}"], "path": ["admin", "users"] } }
+        },
+        {
+          "name": "Approve Listing",
+          "request": { "method": "POST", "header": [], "url": { "raw": "{{baseUrl}}/admin/listings/{{listingId}}/approve", "host": ["{{baseUrl}}"], "path": ["admin", "listings", "{{listingId}}", "approve"] } }
+        },
+        {
+          "name": "Reject Listing",
+          "request": { "method": "POST", "header": [], "url": { "raw": "{{baseUrl}}/admin/listings/{{listingId}}/reject", "host": ["{{baseUrl}}"], "path": ["admin", "listings", "{{listingId}}", "reject"] } }
+        },
+        {
+          "name": "Pending Reviews",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/admin/reviews/pending", "host": ["{{baseUrl}}"], "path": ["admin", "reviews", "pending"] } }
+        },
+        {
+          "name": "Publish Review",
+          "request": { "method": "POST", "header": [], "url": { "raw": "{{baseUrl}}/admin/reviews/{{reviewId}}/publish", "host": ["{{baseUrl}}"], "path": ["admin", "reviews", "{{reviewId}}", "publish"] } }
+        },
+        {
+          "name": "Reject Review",
+          "request": { "method": "POST", "header": [], "url": { "raw": "{{baseUrl}}/admin/reviews/{{reviewId}}/reject", "host": ["{{baseUrl}}"], "path": ["admin", "reviews", "{{reviewId}}", "reject"] } }
+        },
+        {
+          "name": "Notifications",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/admin/notifications", "host": ["{{baseUrl}}"], "path": ["admin", "notifications"] } }
+        },
+        {
+          "name": "List Ad Packages",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/admin/payments/ad-packages", "host": ["{{baseUrl}}"], "path": ["admin", "payments", "ad-packages"] } }
+        },
+        {
+          "name": "Create Ad Package",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('adPackageId', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Standard Listing Ad\",\n  \"description\": \"Publishes one listing for 30 days.\",\n  \"price\": 25,\n  \"currency\": \"USD\",\n  \"durationDays\": 30,\n  \"isActive\": true,\n  \"displayOrder\": 10\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/admin/payments/ad-packages", "host": ["{{baseUrl}}"], "path": ["admin", "payments", "ad-packages"] }
+          }
+        },
+        {
+          "name": "Update Ad Package",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Standard Listing Ad\",\n  \"description\": \"Publishes one listing for 30 days.\",\n  \"price\": 30,\n  \"currency\": \"USD\",\n  \"durationDays\": 30,\n  \"isActive\": true,\n  \"displayOrder\": 10\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/admin/payments/ad-packages/{{adPackageId}}", "host": ["{{baseUrl}}"], "path": ["admin", "payments", "ad-packages", "{{adPackageId}}"] }
+          }
+        },
+        {
+          "name": "Delete Ad Package",
+          "request": { "method": "DELETE", "header": [], "url": { "raw": "{{baseUrl}}/admin/payments/ad-packages/{{adPackageId}}", "host": ["{{baseUrl}}"], "path": ["admin", "payments", "ad-packages", "{{adPackageId}}"] } }
+        },
+        {
+          "name": "List Promo Codes",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/admin/payments/promo-codes", "host": ["{{baseUrl}}"], "path": ["admin", "payments", "promo-codes"] } }
+        },
+        {
+          "name": "Create Promo Code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('promoCodeId', json.id);",
+                  "  pm.collectionVariables.set('promoCode', json.code);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"WELCOME10\",\n  \"description\": \"Ten percent off first listing ad.\",\n  \"discountType\": \"Percent\",\n  \"percentOff\": 10,\n  \"amountOff\": null,\n  \"currency\": \"USD\",\n  \"maxRedemptions\": 100,\n  \"perUserLimit\": 1,\n  \"validFromUtc\": \"2026-01-01T00:00:00Z\",\n  \"expiresAtUtc\": \"2027-01-01T00:00:00Z\",\n  \"autoDeleteAtUtc\": \"2027-02-01T00:00:00Z\",\n  \"isActive\": true\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/admin/payments/promo-codes", "host": ["{{baseUrl}}"], "path": ["admin", "payments", "promo-codes"] }
+          }
+        },
+        {
+          "name": "Update Promo Code",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"WELCOME10\",\n  \"description\": \"Ten percent off first listing ad.\",\n  \"discountType\": \"Percent\",\n  \"percentOff\": 10,\n  \"amountOff\": null,\n  \"currency\": \"USD\",\n  \"maxRedemptions\": 200,\n  \"perUserLimit\": 1,\n  \"validFromUtc\": \"2026-01-01T00:00:00Z\",\n  \"expiresAtUtc\": \"2027-01-01T00:00:00Z\",\n  \"autoDeleteAtUtc\": \"2027-02-01T00:00:00Z\",\n  \"isActive\": true\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/admin/payments/promo-codes/{{promoCodeId}}", "host": ["{{baseUrl}}"], "path": ["admin", "payments", "promo-codes", "{{promoCodeId}}"] }
+          }
+        },
+        {
+          "name": "Delete Promo Code",
+          "request": { "method": "DELETE", "header": [], "url": { "raw": "{{baseUrl}}/admin/payments/promo-codes/{{promoCodeId}}", "host": ["{{baseUrl}}"], "path": ["admin", "payments", "promo-codes", "{{promoCodeId}}"] } }
+        },
+        {
+          "name": "Payment Checkouts",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/admin/payments/checkouts", "host": ["{{baseUrl}}"], "path": ["admin", "payments", "checkouts"] } }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "List Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/notifications", "host": ["{{baseUrl}}"], "path": ["notifications"] }
+          }
+        },
+        {
+          "name": "List Notifications By Topic",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/notifications/topics/{{notificationTopic}}", "host": ["{{baseUrl}}"], "path": ["notifications", "topics", "{{notificationTopic}}"] }
+          }
+        }
+      ]
+    }
+  ]
+}
