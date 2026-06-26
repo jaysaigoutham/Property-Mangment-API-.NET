@@ -44,6 +44,42 @@ Gateway.Api :8080
         +--> Admin.Api          -> forwards secured admin calls to other services
 ```
 
+### System Diagram
+
+```mermaid
+flowchart LR
+    client["Frontend or Postman"] --> gateway["Gateway.Api :8080"]
+
+    gateway --> identity["Identity.Api :8081"]
+    gateway --> listings["Listings.Api :8082"]
+    gateway --> media["Media.Api :8083"]
+    gateway --> engagement["Engagement.Api :8084"]
+    gateway --> notifications["Notifications.Api :8085"]
+    gateway --> admin["Admin.Api :8086"]
+    gateway --> payments["Payments.Api :8087"]
+
+    identity --> identityDb["PostgreSQL: property_identity"]
+    listings --> listingsDb["PostgreSQL: property_listings"]
+    media --> mediaDb["PostgreSQL: property_media"]
+    engagement --> engagementDb["PostgreSQL: property_engagement"]
+    notifications --> notificationsDb["PostgreSQL: property_notifications"]
+    payments --> paymentsDb["PostgreSQL: property_payments"]
+
+    listings --> redis["Redis cache"]
+    media --> minio["MinIO property-images bucket"]
+
+    listings --> kafka["Kafka KRaft"]
+    engagement --> kafka
+    payments --> kafka
+    kafka --> notifications
+
+    admin --> identity
+    admin --> listings
+    admin --> engagement
+    admin --> notifications
+    admin --> payments
+```
+
 ### Main Patterns
 
 - **API Gateway with YARP**: `Gateway.Api` receives public HTTP calls and routes them to the correct service.
@@ -256,6 +292,25 @@ promo-code.deleted
 ad.entitlement.created
 ```
 
+### Outbox Event Flow
+
+```mermaid
+sequenceDiagram
+    participant Api as API service
+    participant Db as Service PostgreSQL database
+    participant Outbox as Outbox publisher background service
+    participant Kafka as Kafka topic
+    participant Consumer as Consumer service
+
+    Api->>Db: Save business data and outbox message
+    Db-->>Api: Commit transaction
+    Outbox->>Db: Poll unpublished outbox messages
+    Outbox->>Kafka: Publish event
+    Outbox->>Db: Mark outbox message processed
+    Consumer->>Kafka: Consume event
+    Consumer->>Db: Save consumer-side result
+```
+
 ### MinIO
 
 MinIO stores uploaded property images.
@@ -286,6 +341,23 @@ Direct service URLs are useful for debugging:
 | Notifications | `http://localhost:8085` |
 | Admin | `http://localhost:8086` |
 | Payments | `http://localhost:8087` |
+
+### Request Routing Flow
+
+```mermaid
+sequenceDiagram
+    participant Client as Frontend or Postman
+    participant Gateway as Gateway.Api
+    participant Service as Target API service
+    participant Store as Database or external dependency
+
+    Client->>Gateway: HTTP request to http://localhost:8080
+    Gateway->>Service: Route by path
+    Service->>Store: Read or write data
+    Store-->>Service: Result
+    Service-->>Gateway: API response
+    Gateway-->>Client: API response
+```
 
 ## OpenAPI And Swagger
 
@@ -545,6 +617,18 @@ GET http://localhost:8080/listings?city=Colombo&propertyType=Apartment&page=1&pa
 
 Only approved listings appear in public search.
 
+### Listing Lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> Draft
+    Draft --> PendingApproval: Agent submits after paid ad entitlement
+    PendingApproval --> Approved: Admin approves
+    PendingApproval --> Rejected: Admin rejects
+    Rejected --> Draft: Agent edits and resubmits
+    Approved --> [*]
+```
+
 ## Payment Provider Configuration
 
 Payment provider secrets are read from environment/config:
@@ -567,6 +651,35 @@ Hosted checkout flow:
 5. Provider sends webhook to backend.
 6. Backend verifies webhook and creates ad entitlement.
 7. Agent can submit listing for approval.
+
+### Paid Listing Checkout Flow
+
+```mermaid
+sequenceDiagram
+    participant Agent
+    participant Gateway
+    participant Payments as Payments.Api
+    participant Provider as Stripe or PayHere
+    participant Listings as Listings.Api
+
+    Agent->>Gateway: Select ad package and enter promo code
+    Gateway->>Payments: POST /payments/checkouts/preview
+    Payments-->>Gateway: Original, discount, final amount
+    Agent->>Gateway: Create checkout
+    Gateway->>Payments: POST /payments/checkouts
+    Payments->>Provider: Create hosted checkout
+    Provider-->>Payments: Checkout reference and redirect/form data
+    Payments-->>Gateway: Checkout response
+    Gateway-->>Agent: Redirect to hosted checkout
+    Provider->>Payments: Webhook notification
+    Payments->>Payments: Verify signature, amount, currency, idempotency
+    Payments->>Payments: Create ad entitlement
+    Agent->>Gateway: Submit listing for approval
+    Gateway->>Listings: POST /listings/{id}/submit
+    Listings->>Payments: Check active entitlement
+    Payments-->>Listings: Entitlement active
+    Listings-->>Gateway: Listing is pending approval
+```
 
 ## Admin APIs
 
